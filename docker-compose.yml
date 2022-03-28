@@ -1,0 +1,8 @@
+version: '3.1'
+
+services:
+  DO2VO2:
+    image: bawki/DO2VO2
+    build: .
+    ports:
+      - "3839:3839"
