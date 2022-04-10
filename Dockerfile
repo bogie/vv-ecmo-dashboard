@@ -39,6 +39,6 @@ COPY app /root/DO2VO2
 
 COPY Rprofile.site /usr/lib/R/etc/
 
-EXPOSE 3839
+EXPOSE 3838
 
 CMD ["R", "-e", "shiny::runApp('/root/DO2VO2/')"]
