@@ -30,7 +30,7 @@ RUN apt-get update && apt-get install -y \
 RUN R -e "install.packages(c('shiny', 'rmarkdown','rstan'), repos='https://cloud.r-project.org/')"
 
 # install dependencies of the dividashboard app
-RUN R -e "install.packages(c('tidyverse'))"
+RUN R -e "install.packages(c('tidyverse', 'plotly'))"
 
 # copy the app to the image
 RUN mkdir /root/DO2VO2
@@ -41,4 +41,4 @@ COPY Rprofile.site /usr/lib/R/etc/
 
 EXPOSE 3839
 
-CMD ["R", "-e", "shiny::runApp('/root/DO2VO2')"]
+CMD ["R", "-e", "shiny::runApp('/root/DO2VO2/')"]
