@@ -50,12 +50,12 @@ myserver <- function(input,output,session){
   
   output$HbInput <- renderUI({
     if(input$HbSync) {
-      tags$td(numericInput("HbSynced", label = NULL, value = 8, width = 70, min = 3, max = 20, step = 0.1))
+      tags$td(numericInput("HbSynced", label = NULL, value = 8, width = 60, min = 3, max = 20, step = 0.1))
     } else {
       tagList(
-        tags$td(numericInput("HbArt", label = NULL, value = 8, width = 70, min = 3, max = 20, step = 0.1)),
-        tags$td(numericInput("HbVen", label = NULL, value = 8, width = 70, min = 3, max = 20, step = 0.1)),
-        tags$td(numericInput("HbECMO", label = NULL, value = 8, width = 100, min = 3, max = 20, step = 0.1))
+        tags$td(numericInput("HbArt", label = NULL, value = 8, width = 60, min = 3, max = 20, step = 0.1)),
+        tags$td(numericInput("HbVen", label = NULL, value = 8, width = 60, min = 3, max = 20, step = 0.1)),
+        tags$td(numericInput("HbECMO", label = NULL, value = 8, width = 60, min = 3, max = 20, step = 0.1))
       )
     }
   })
@@ -129,13 +129,34 @@ myserver <- function(input,output,session){
     
     FlowTable() %>%
       plot_ly(type = "scatter", mode = "lines") %>%
-      add_trace(x=~`Hemoglobin (mg/dl)`, y=~DO2VO2rest, name = "No sepsis") %>%
-      add_trace(x=~`Hemoglobin (mg/dl)`, y=~DO2VO2sepsis, name = "Sepsis") %>%
+      add_trace(x=~`Hemoglobin (mg/dl)`,
+                y=~DO2VO2rest,
+                name = "No sepsis",
+                hoverinfo = 'text',
+                color = 'green',
+                text = ~paste0(
+                  'No Sepsis (3ml O2 per kg):',
+                  '<br />Hb: ', `Hemoglobin (mg/dl)`,
+                  '<br />DO2/VO2: ', round(DO2VO2rest,1),
+                  '<br />DO2 per kg: ', round(DO2perKg,1)
+                  )
+                ) %>%
+      add_trace(x=~`Hemoglobin (mg/dl)`,
+                y=~DO2VO2sepsis,
+                name = "Sepsis",
+                hoverinfo = 'text',
+                color = 'orange',
+                text = ~paste0(
+                  'Sepsis (4ml O2 per kg):',
+                  '<br />Hb: ', `Hemoglobin (mg/dl)`,
+                  '<br />DO2/VO2: ', round(DO2VO2sepsis,1),
+                  '<br />DO2 per kg: ', round(DO2perKg,1))
+                ) %>%
       layout(
         title = paste0("DO2/VO2 Graph for Hemoglobin at ",input$Flow, "l/min ECMO flow"),
         xaxis = list(title = "Hemoglobin (mg/dl)"),
         yaxis = list(title = "DO2/VO2"),
-        shapes = list(hline(3, "red"), hline(5, "green"))
+        shapes = list(hline(3, "red"), hline(5, "orange"))
       )
   })
   
@@ -276,14 +297,47 @@ myserver <- function(input,output,session){
   })
   
   output$Nutrition_IBW <- renderUI(
-    Nutrition_IBW()
+    round(Nutrition_IBW(),1)
+  )
+  
+  BMI <- reactive({
+    input$Nutrition_BW/((input$Nutrition_Height/100)^2)
+  })
+  
+  output$BMI <- renderUI(
+    round(BMI(),1)
   )
   
   Nutrition_Kcal <- reactive({
-    ifelse(input$Nutrition_BMI == -25, Nutrition_IBW() * 25, as.numeric(input$Nutrition_BW) * as.numeric(input$Nutrition_BMI))
+    if (BMI() <= 18) {
+      input$Nutrition_BW * 35
+    } else if (BMI() <= 25) {
+      input$Nutrition_BW * 25
+    } else if (BMI() <= 30) {
+      Nutrition_IBW() * 25
+    } else {
+      input$Nutrition_BW * 15
+    }
+    # ifelse(input$Nutrition_BMI == -25, Nutrition_IBW() * 25, as.numeric(input$Nutrition_BW) * as.numeric(input$Nutrition_BMI))
   })
   
   output$Nutrition_Kcal <- renderUI(
     Nutrition_Kcal()
+  )
+  
+  Nutrition_TargetPct <- reactive({
+    as.numeric(input$Nutrition_TargetPct)
+  })
+  
+  output$Nutrition_TargetPct <- renderUI(
+    Nutrition_TargetPct()
+  )
+  
+  Nutrition_TargetKcal <- reactive({
+    Nutrition_Kcal() * Nutrition_TargetPct()/100
+  })
+  
+  output$Nutrition_TargetKcal <- renderUI(
+    round(Nutrition_TargetKcal(),0)
   )
 }

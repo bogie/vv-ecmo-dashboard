@@ -65,5 +65,10 @@ Head <- tags$head(
                         
                         .switch-field label.radio-inline:last-of-type {
                           border-radius: 0 4px 4px 0;
-                        }"))
+                        }
+                        
+                        .div-align-right {
+                          text-align: right;
+                        }
+                  "))
 )
