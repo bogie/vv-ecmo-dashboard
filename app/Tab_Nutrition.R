@@ -115,5 +115,9 @@ Tab_Nutrition <- tabPanel("Nutrition",
                                             ) # tbody
                                             ) # table
                                  ) # column
-                          ) # fluidRow
+                          ), # fluidRow
+                          fluidRow(
+                            column(width = 12,
+                                   uiOutput("Nutrition_Table"))
+                          )
                           )

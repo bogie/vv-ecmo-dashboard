@@ -13,6 +13,7 @@ myUI <- shinyUI({
     Tab_Nutrition,
     Tab_RESP,
     Tab_SAVE
-  )
+  ),
+  theme = bs_theme(version = 3, bootswatch = "darkly"),
   )
 })

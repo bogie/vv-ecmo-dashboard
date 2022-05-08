@@ -1,6 +1,7 @@
 library(shiny)
 library(tidyverse)
 library(plotly)
+library(bslib)
 
 Sys.setlocale("LC_ALL","german")
 source.utf8 <- function(f, local = F) {
