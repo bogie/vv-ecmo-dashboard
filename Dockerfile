@@ -17,6 +17,8 @@ RUN apt-get update && apt-get install -y \
     libssh2-1-dev \
     libssl1.1 \
     libxml2-dev \
+    libmagic++-dev \
+    librsvg2-dev \
     git \
     cmake
 

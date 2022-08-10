@@ -71,7 +71,7 @@ Tab_Shunt <- tabPanel("Shunting",
                                             tags$tr(
                                               tags$td(strong("SatO2 PV (=SatO2 arterial) (%)")),
                                               tags$td(
-                                                numericInput("Shunt_SatO2_PV", label = NULL, value = 91.1, min = 130, max = 250, step = 0.1)
+                                                numericInput("Shunt_SatO2_PV", label = NULL, value = 91.1, min = 1, max = 100, step = 0.1)
                                               )
                                             ),
                                             tags$tr(
