@@ -30,7 +30,7 @@ RUN apt-get update && apt-get install -y \
 RUN R -e "install.packages(c('shiny', 'rmarkdown','rstan','bslib'), repos='https://cloud.r-project.org/')"
 
 # install dependencies of the dividashboard app
-RUN R -e "install.packages(c('tidyverse', 'plotly', 'magick', 'rsvg')"
+RUN R -e "install.packages(c('tidyverse', 'plotly', 'magick', 'rsvg'))"
 
 # copy the app to the image
 RUN mkdir /root/DO2VO2
