@@ -15,6 +15,7 @@ source.utf8('./Tab_DO2VO2.R', local = T)
 source.utf8('./Tab_RESP.R', local = T)
 source.utf8('./Tab_SAVE.R', local = T)
 source.utf8('./Tab_Nutrition.R', local = T)
+source.utf8('./Tab_Shunt.R', local = T)
 
 Head <- tags$head(
   tags$style(HTML("

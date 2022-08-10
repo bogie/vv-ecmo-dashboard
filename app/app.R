@@ -2,6 +2,8 @@ library(shiny)
 library(tidyverse)
 library(plotly)
 library(bslib)
+library(magick)
+library(rsvg)
 
 Sys.setlocale("LC_ALL","german")
 source.utf8 <- function(f, local = F) {
@@ -19,6 +21,8 @@ source.utf8 <- function(f, local = F) {
 
 source.utf8('myUI.R', local = TRUE)
 source.utf8('myServer.R')
+
+options(shiny.reactlog = TRUE)
 
 shinyApp(
   ui = myUI,

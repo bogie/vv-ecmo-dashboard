@@ -47,7 +47,7 @@ Tab_DO2VO2 <- tabPanel("DO2/VO2",
                                           ),
                                           tags$tr(
                                                   tags$td("ECMO blood flow (l/min)", colspan = 2),
-                                                  tags$td(numericInput("Flow", label = NULL, value = 5, min = 1, max = 5, width = 80))
+                                                  tags$td(numericInput("Flow", label = NULL, value = 5, min = 0, max = 5, width = 80))
                                           )
                                         )
                                       )

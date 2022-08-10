@@ -340,9 +340,11 @@ myserver <- function(input,output,session){
     )
   ) # output$SAVEscore
   
-  ## nutiriton
+  ## nutrition
   
-  nutrition <- reactive({read.csv2("./nutrition.csv")})
+  nutrition <- reactive({
+    read.csv2("./nutrition.csv") %>% as_tibble()
+  })
   
   Nutrition_IBW <- reactive({
     as.numeric(ifelse(input$Nutrition_Sex == "w", 45.5, 50.0) + (0.9055*(as.numeric(input$Nutrition_Height) - 152.4)))
@@ -393,31 +395,187 @@ myserver <- function(input,output,session){
     round(Nutrition_TargetKcal(),0)
   )
   
-  # nutrition_kcalPerDay <- reactiveValues()
-  # for(x in 1:length(nutrition()$compound)) {
-  #   nutrition_kcalPerDay[[paste0(x,"_ckalPerDay")]] <- 0
-  # }
+  Nutrition_Table <- reactive({
+    kcals <- sapply(1:nrow(nutrition()), function(x) {
+      input[[paste0(x,"_rate")]]
+    }) %>% tibble("mlPerHour"=.) %>%
+      bind_cols(nutrition(),.) %>%
+      mutate(kcalPerHour = kcalPerML * mlPerHour,
+             kcalPerDay = kcalPerHour * 24,
+             proteinPerHour = proteinPerML * mlPerHour,
+             proteinPerDay = proteinPerHour * 24,
+             aminoAcidPerHour = aminoAcidPerML * mlPerHour,
+             aminoAcidPerDay = aminoAcidPerHour * 24,
+             fluidPerDay = mlPerHour * 24)
+  })
   
+  output$Summary_Table <- renderTable(
+    Nutrition_Table()
+  )
+
   output$Nutrition_Table <- renderUI({
-    tags$table(
+    tags$table(width="100%",
       tags$thead(
-        tags$th("Compound"),
-        lapply(nutrition()$compound, function(x) { tags$th(x)})
+        tags$th("Compound", style="text-align:center"),
+        lapply(nutrition()$compound, function(x) { tags$th(x, style="text-align:center")})
       ),
       tags$tbody(
         tags$tr(
-          tags$td("Kcal/ml"),
-          lapply(nutrition()$kcalPerML, function(x) { tags$td(x)})
+          tags$td("Kcal/ml", style="text-align:center"),
+          lapply(nutrition()$kcalPerML, function(x) { tags$td(x, style="text-align:center")})
         ),
         tags$tr(
-          tags$td("ml/h"),
-          lapply(1:length(nutrition()$compound), function(x) { tags$td(numericInput(inputId = paste0(x,"_rate"),label = NULL,min = 0, value = 50, width = 80))})
-        )#,
-        # tags$tr(
-        #   lapply(1:length(nutrition_kcalPerDay()), function(x) { tags$td(x)})
-        # )
-      )
+          tags$td("ml/h", style="text-align:center"),
+          lapply(1:length(nutrition()$compound), function(x) {
+            tags$td(
+              numericInput(
+                inputId = paste0(x,"_rate"),
+                label = NULL,
+                min = 0,
+                value = 0,
+                width = 80), style="content-align:center"
+              )
+            })
+        )
     )
-    
+    )
   })
+  
+  # Shunting
+  
+  Shunt_BSA <- reactive(
+    as.numeric(round(0.007184*(as.numeric(input$Shunt_Weight)^0.425)*(as.numeric(input$Shunt_Height)^0.725),2))
+  )
+  
+  output$Shunt_BSA <- renderUI(
+    Shunt_BSA()
+  )
+  
+  Shunt_VO2 <- reactive({
+    if(input$Shunt_Sex == "w") {
+      as.numeric(Shunt_BSA()*(147.5-input$Shunt_Age*0.47))
+    } else if (input$Shunt_Sex == "m") {
+      as.numeric(Shunt_BSA()*(161-input$Shunt_Age*0.54))
+    }
+  })
+  
+  output$Shunt_VO2 <- renderUI(
+    Shunt_VO2()
+  )
+  
+  Shunt_SAO2 <- reactive({
+    as.numeric(
+      input$Shunt_SatO2_art/100 * input$Shunt_Hb * 1.34
+    )
+  })
+  
+  Shunt_MVO2 <- reactive({
+    as.numeric(
+      ((input$Shunt_SatO2_VCs/100 * input$Shunt_Hb * 1.34)*3 +
+      (input$Shunt_SatO2_VCi/100 * input$Shunt_Hb * 1.34))/4
+    )
+  })
+  
+  Shunt_PAO2 <- reactive({
+    as.numeric(
+      input$Shunt_SatO2_PA/100 * input$Shunt_Hb * 1.34
+    )
+  })
+  
+  Shunt_PVO2 <- reactive({
+    input$Shunt_SatO2_PV/100 * input$Shunt_Hb * 1.34
+  })
+  
+  Shunt_Qs <- reactive({
+    as.numeric(Shunt_VO2()/((Shunt_SAO2()-Shunt_MVO2())*10))
+  })
+  
+  Shunt_Qs_BSA <- reactive({
+    as.numeric(Shunt_Qs()/Shunt_BSA())
+  })
+  
+  Shunt_Qp <- reactive({
+    as.numeric(
+      Shunt_VO2()/((Shunt_PVO2()-Shunt_PAO2())*10)
+    )
+  })
+  
+  Shunt_Qeff <- reactive({
+    as.numeric(
+      Shunt_VO2()/((Shunt_PVO2()-Shunt_MVO2())*10)
+    )
+  })
+  
+  Shunt_LR <- reactive({
+    as.numeric(
+      Shunt_Qp() - Shunt_Qeff()
+    )
+  })
+  
+  Shunt_LR_Fraction <- reactive({
+    as.numeric(
+      Shunt_LR() / Shunt_Qp() *100
+    )
+  })
+  
+  Shunt_Qp_Qs <- reactive({
+    as.numeric(
+      Shunt_Qp() / Shunt_Qs()
+    )
+  })
+  
+  Shunt_RL <- reactive({
+    as.numeric(Shunt_Qs() - Shunt_Qeff())
+  })
+  
+  Shunt_RL_Fraction <- reactive({
+    as.numeric(Shunt_RL() / Shunt_Qs() * 100)
+  })
+  
+  
+  Shunt_Table <- reactive({
+    # tibble(
+    #   parameters = c("VO2 (ml/min)", "SA O2 (ml/100 ml)", "MV O2 (ml/100 ml)", "PA O2 (ml/100 ml)", "PV O2 (ml/100 ml)",
+    #                  "Qs (l/min)", "Qs (l/min/m²)", "Qp (l/min)", "Qeff (l/min)",
+    #                  "Qp - Qeff (l/min) = LR-Shunt", "(Qp - Qeff)/Qp (%)", "Qp/Qs", "Qs-Qeff (l/min) = RL-Shunt", "(Qs-Qeff)/Qs (%)"),
+    #   values = c(Shunt_VO2(), Shunt_SAO2(), Shunt_MVO2(), Shunt_PAO2(), Shunt_PVO2(),
+    #              Shunt_Qs(), Shunt_Qs_BSA(), Shunt_Qp(), Shunt_Qeff(), Shunt_LR(), Shunt_LR_Fraction(), Shunt_Qp_Qs(), Shunt_RL(), Shunt_RL_Fraction())
+    # )
+    
+    tibble("VO2 (ml/min)" = Shunt_VO2(),
+           "SA O2 (ml/100 ml)" = Shunt_SAO2(),
+           "MV O2 (ml/100 ml)" = Shunt_MVO2(),
+           "PA O2 (ml/100 ml)" = Shunt_PAO2(),
+           "PV O2 (ml/100 ml)" = Shunt_PVO2(),
+           "Qs (l/min)" = Shunt_Qs(),
+           "Qs (l/min/m²)" = Shunt_Qs_BSA(),
+           "Qp (l/min)" = Shunt_Qp(),
+           "Qeff (l/min)" = Shunt_Qeff(),
+           "Qp - Qeff (l/min) = LR-Shunt" = Shunt_LR(),
+           "(Qp - Qeff)/Qp (%)" = Shunt_LR_Fraction(),
+           "Qp/Qs" = Shunt_Qp_Qs(),
+           "Qs-Qeff (l/min) = RL-Shunt" = Shunt_RL(),
+           "(Qs-Qeff)/Qs (%)" = Shunt_RL_Fraction()
+           )
+  })
+  
+  output$Shunt_Table <- renderTable(
+    Shunt_Table() %>%
+      pivot_longer(everything(),
+                   names_to = "Parameter",
+                   values_to = "Value",
+                   values_transform = as.numeric) %>%
+      mutate(Value = round(Value, 2))
+  )
+  
+  output$Shunt_Image <- renderImage({
+    tmpfile <- image_read_svg("./PulmonaryShunt.svg") %>%
+      image_annotate(., text = paste0("Qp = ", round(Shunt_Qp(),2), "l/min"),
+                   location = "+240+450",
+                   size = 30) %>%
+      image_write(tempfile(fileext='png'), format = 'png')
+    
+    list(src= tmpfile, contentType = "image/png")
+  })
+  
 }

@@ -78,7 +78,7 @@ Tab_Nutrition <- tabPanel("Nutrition",
                                           ),
                                           tags$td(
                                             sliderInput(inputId = "Nutrition_ENPN",
-                                                        label = "Enteral--------------------><---------------Parenteral", value =  50,
+                                                        label = "Fraction of parenteral kcal", value =  50,
                                                         min = 0, max = 100, step = 1,
                                                         ticks = T, round = T)
                                           )
@@ -119,5 +119,9 @@ Tab_Nutrition <- tabPanel("Nutrition",
                           fluidRow(
                             column(width = 12,
                                    uiOutput("Nutrition_Table"))
+                          ),
+                          fluidRow(
+                            column(width = 12,
+                                   tableOutput("Summary_Table"))
                           )
                           )
