@@ -83,7 +83,14 @@ Tab_Nutrition <- tabPanel("Nutrition",
                                                         ticks = T, round = T)
                                           )
                                         ),
-                                        
+                                        tags$tr(
+                                          tags$td(
+                                            strong("Ignore Intrafusin in kcal calculation"),
+                                            checkboxInput("Nutrition_IgnoreIntrafusin",
+                                                          label = NULL,
+                                                          value = FALSE)
+                                          )
+                                        )
                                       ) # tbody
                                      ) # table
                           ), # column
@@ -115,9 +122,21 @@ Tab_Nutrition <- tabPanel("Nutrition",
                                               tags$tr(
                                                 tags$td("Parenteral calories"),
                                                 tags$td(
-                                                  textOutput("Nutrition_ParenteralKcalPerDay"), style="text-align:right;"
+                                                  uiOutput("Nutrition_ParenteralKcalPerDay", inline = T)
                                                 )
-                                              ) 
+                                              ), # tr
+                                              tags$tr(
+                                                tags$td("Enteral calories"),
+                                                tags$td(
+                                                  uiOutput("Nutrition_EnteralKcalPerDay", inline = T)
+                                                )
+                                              ), # tr
+                                              tags$tr(
+                                                tags$td("Total administered calories/day"),
+                                                tags$td(
+                                                  uiOutput("Nutrition_KcalPerDay", inline = T)
+                                                )
+                                              )
                                             ) # tbody
                                             ) # table
                                  ) # column

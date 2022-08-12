@@ -376,7 +376,7 @@ myserver <- function(input,output,session){
   })
   
   output$Nutrition_Kcal <- renderUI(
-    Nutrition_Kcal()
+    round(Nutrition_Kcal(),0)
   )
   
   Nutrition_TargetPct <- reactive({
@@ -395,15 +395,84 @@ myserver <- function(input,output,session){
     round(Nutrition_TargetKcal(),0)
   )
   
-  Nutrition_ParentalKcalPerDay <- reactive({
+  Nutrition_ParenteralKcalPerDay <- reactive({
+    if(input$Nutrition_IgnoreIntrafusin) {
+      out <- Nutrition_Table() %>%
+        filter(ROA == "parenteral" & compound != "Intrafusin 15pct") %>%
+        summarise(kcalPerDay = sum(kcalPerDay))
+    } else {
+      out <- Nutrition_Table() %>%
+          filter(ROA == "parenteral") %>%
+          summarise(kcalPerDay = sum(kcalPerDay))
+    }
+    return(out)
+  })
+  
+  Nutrition_EnteralKcalPerDay <- reactive({
     Nutrition_Table() %>%
-      filter(ROA == "parenteral") %>%
+      filter(ROA == "enteral") %>%
       summarise(kcalPerDay = sum(kcalPerDay))
   })
   
-  output$Nutrition_ParenteralKcalPerDay <- renderText(
-    Nutrition_ParentalKcalPerDay()$kcalPerDay
-  )
+  Nutrition_Target_Enteral <- reactive({
+    Nutrition_TargetKcal() * (100-input$Nutrition_ENPN)/100
+  })
+  
+  Nutrition_Target_Parenteral <- reactive({
+    Nutrition_TargetKcal() * input$Nutrition_ENPN/100
+  })
+  
+  output$Nutrition_ParenteralKcalPerDay <- renderUI({
+    ratio <- Nutrition_ParenteralKcalPerDay()$kcalPerDay / Nutrition_Target_Parenteral()
+    if(ratio >= 0.9 && ratio <= 1.1) {
+      color <- "green"
+    } else {
+      color <- "red"
+    }
+    tags$span(
+      paste0(
+        round(Nutrition_ParenteralKcalPerDay()$kcalPerDay,0),
+        "/",
+        round(Nutrition_Target_Parenteral(),0)
+        ),
+      style=paste0("color:",color,";text-align:right;"))
+  })
+  
+  output$Nutrition_EnteralKcalPerDay <- renderUI({
+    ratio <- Nutrition_EnteralKcalPerDay()$kcalPerDay / Nutrition_Target_Enteral()
+    if(ratio >= 0.9 && ratio <= 1.1) {
+      color <- "green"
+    } else {
+      color <- "red"
+    }
+    tags$span(
+      paste0(
+        round(Nutrition_EnteralKcalPerDay()$kcalPerDay,0),
+        "/",
+        round(Nutrition_Target_Enteral(),0)
+        ),
+      style=paste0("color:",color,";text-align:right;"))
+  })
+  
+  Nutrition_KcalPerDay <- reactive({
+    as.numeric(Nutrition_EnteralKcalPerDay()$kcalPerDay + Nutrition_ParenteralKcalPerDay()$kcalPerDay)
+  })
+  
+  output$Nutrition_KcalPerDay <- renderUI({
+    ratio <- Nutrition_KcalPerDay() / Nutrition_TargetKcal()
+    if(ratio >= 0.9 && ratio <= 1.1) {
+      color <- "green"
+    } else {
+      color <- "red"
+    }
+    tags$span(
+      paste0(
+        round(Nutrition_KcalPerDay(),0),
+        "/",
+        round(Nutrition_TargetKcal(),0)
+      ),
+      style=paste0("color:",color,";text-align:right;"))
+  })
   
   Nutrition_Table <- reactive({
     kcals <- sapply(1:nrow(nutrition()), function(x) {
