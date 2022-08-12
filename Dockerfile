@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y \
     libssh2-1-dev \
     libssl1.1 \
     libxml2-dev \
-    libmagic++-dev \
+    libmagick++-dev \
     librsvg2-dev \
     git \
     cmake
@@ -36,7 +36,6 @@ RUN R -e "install.packages(c('tidyverse', 'plotly', 'magick', 'rsvg'))"
 
 # copy the app to the image
 RUN mkdir /root/DO2VO2
-#RUN git clone "https://github.com/bogie/divi-dashboard.git" /root/diviDashboard
 COPY app /root/DO2VO2
 
 COPY Rprofile.site /usr/lib/R/etc/

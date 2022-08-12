@@ -88,6 +88,13 @@ Tab_Shunt <- tabPanel("Shunting",
                         )
                       ),
                       fluidRow(
-                        #imageOutput("Shunt_Image")
+                        column(6,
+                               uiOutput("Shunt_Explanation")
+                        )
+                      ),
+                      fluidRow(
+                        column(6,
+                              imageOutput("Shunt_Image",width = "50%")
+                        )
                       )
                       )

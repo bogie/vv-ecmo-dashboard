@@ -395,6 +395,16 @@ myserver <- function(input,output,session){
     round(Nutrition_TargetKcal(),0)
   )
   
+  Nutrition_ParentalKcalPerDay <- reactive({
+    Nutrition_Table() %>%
+      filter(ROA == "parenteral") %>%
+      summarise(kcalPerDay = sum(kcalPerDay))
+  })
+  
+  output$Nutrition_ParenteralKcalPerDay <- renderText(
+    Nutrition_ParentalKcalPerDay()$kcalPerDay
+  )
+  
   Nutrition_Table <- reactive({
     kcals <- sapply(1:nrow(nutrition()), function(x) {
       input[[paste0(x,"_rate")]]
@@ -532,6 +542,53 @@ myserver <- function(input,output,session){
     as.numeric(Shunt_RL() / Shunt_Qs() * 100)
   })
   
+  ## Pulmonary Shunt
+  
+  Shunt_SO2_MV <- reactive({
+    as.numeric(
+      ((input$Shunt_SatO2_VCs*3) + (input$Shunt_SatO2_VCi)) / 4
+    )
+  })
+  
+  Shunt_CvO2 <- reactive({
+    as.numeric(
+      input$Shunt_Hb * 1.34 * input$Shunt_SatO2_PA / 100 * 10
+    )
+  })
+  
+  Shunt_CcO2 <- reactive({
+    as.numeric(
+      # assumed to be 100% saturated
+      input$Shunt_Hb * 1.34 * 100 / 100 * 10
+    )
+  })
+  
+  Shunt_CaO2 <- reactive({
+    as.numeric(
+      input$Shunt_Hb * 1.34 * input$Shunt_SatO2_art / 100 * 10
+    )
+  })
+  
+  Shunt_Pulm_Qt <- reactive({
+    as.numeric(
+      Shunt_VO2() /
+      (Shunt_CcO2() - Shunt_CaO2())
+    )
+  })
+  
+  Shunt_Pulm_Qs <- reactive({
+    as.numeric(
+      Shunt_VO2() /
+      (Shunt_CcO2() - Shunt_CvO2())
+    )
+  })
+  
+  Shunt_Qs_Qt <- reactive({
+    as.numeric(
+      Shunt_Pulm_Qs() / Shunt_Pulm_Qt()
+    )
+  })
+  
   
   Shunt_Table <- reactive({
     # tibble(
@@ -555,7 +612,13 @@ myserver <- function(input,output,session){
            "(Qp - Qeff)/Qp (%)" = Shunt_LR_Fraction(),
            "Qp/Qs" = Shunt_Qp_Qs(),
            "Qs-Qeff (l/min) = RL-Shunt" = Shunt_RL(),
-           "(Qs-Qeff)/Qs (%)" = Shunt_RL_Fraction()
+           "(Qs-Qeff)/Qs (%)" = Shunt_RL_Fraction(),
+           "CvO2 ml/l" = Shunt_CvO2(),
+           "CcO2 ml/l" = Shunt_CcO2(),
+           "CaO2 ml/l" = Shunt_CaO2(),
+           "Qt l/min" = Shunt_Pulm_Qt(),
+           "Qs (pulm) l/min" = Shunt_Pulm_Qs(),
+           "Qs/Qt (pulm)" = Shunt_Qs_Qt()
            )
   })
   
@@ -570,12 +633,45 @@ myserver <- function(input,output,session){
   
   output$Shunt_Image <- renderImage({
     tmpfile <- image_read_svg("./PulmonaryShunt.svg") %>%
-      image_annotate(., text = paste0("Qp = ", round(Shunt_Qp(),2), "l/min"),
-                   location = "+240+450",
-                   size = 30) %>%
+      image_annotate(., text = paste0(round(Shunt_CvO2(),2), "ml/l"),
+                     location = "+235+447",
+                     size = 30) %>%
+      image_annotate(., text = paste0(round(Shunt_CcO2(),2), "ml/l"),
+                     location = "+600+447",
+                     size = 30) %>%
+      image_annotate(., text = paste0(round(Shunt_CaO2(),2), "ml/l"),
+                     location = "+1030+447",
+                     size = 30) %>%
+      image_annotate(., text = paste0(round(Shunt_Pulm_Qt(),1), "l/min"),
+                     location = "+160+625",
+                     size = 20) %>%
+      image_annotate(., text = paste0(round(Shunt_Pulm_Qs(),1), "l/min"),
+                     location = "+610+685",
+                     size = 20) %>%
+      image_annotate(., text = paste0(round(Shunt_Qs_Qt(),2)),
+                     location = "+850+455",
+                     size = 20) %>%
+      image_annotate(., text = paste0(round(input$Shunt_SatO2_PA,1), "%"),
+                     location = "+290+323",
+                     size = 20) %>%
+      image_annotate(., text = paste0(round(input$Shunt_SatO2_art,1), "%"),
+                     location = "+1125+323",
+                     size = 20) %>%
       image_write(tempfile(fileext='png'), format = 'png')
     
     list(src= tmpfile, contentType = "image/png")
-  })
+  }, deleteFile = T)
   
+  output$Shunt_Explanation <- renderUI({
+    tagList(
+      tags$h2("Pulmonary shunt equation for ARDS"),
+      tags$ul(
+        tags$li("Using the Berggren shunt equation and the following assumptions:", tags$a()),
+        tags$li("CvO2 is calculated with central venous/pulmonary artery saturation."),
+        tags$li("CcO2 is calculated with the assumption that non-shunted alveoli can raise SatO2 in the pulmonary end-capillaries to 100%."),
+        tags$li("Age and body surface area is used to estimate VO2"),
+        tags$li("Estimated VO2 is used to calculate flow, this will be more inaccurate than Qs/Qt ratio!")
+      )
+    )
+  })
 }

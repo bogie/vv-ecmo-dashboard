@@ -111,7 +111,13 @@ Tab_Nutrition <- tabPanel("Nutrition",
                                                 tags$td(
                                                   uiOutput("Nutrition_TargetKcal"), style="text-align:right;"
                                                 )
-                                              )  #tr
+                                              ), # tr
+                                              tags$tr(
+                                                tags$td("Parenteral calories"),
+                                                tags$td(
+                                                  textOutput("Nutrition_ParenteralKcalPerDay"), style="text-align:right;"
+                                                )
+                                              ) 
                                             ) # tbody
                                             ) # table
                                  ) # column
