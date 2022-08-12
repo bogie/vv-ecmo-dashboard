@@ -512,7 +512,7 @@ myserver <- function(input,output,session){
                 label = NULL,
                 min = 0,
                 value = 0,
-                width = 80), style="content-align:center"
+                width = 80), align = "center"
               )
             })
         )

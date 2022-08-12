@@ -85,10 +85,12 @@ Tab_Nutrition <- tabPanel("Nutrition",
                                         ),
                                         tags$tr(
                                           tags$td(
-                                            strong("Ignore Intrafusin in kcal calculation"),
+                                            strong("Ignore Intrafusin in kcal calculation")
+                                          ),
+                                          tags$td(
                                             checkboxInput("Nutrition_IgnoreIntrafusin",
                                                           label = NULL,
-                                                          value = FALSE)
+                                                          value = FALSE), align = "right"
                                           )
                                         )
                                       ) # tbody
